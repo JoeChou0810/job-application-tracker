@@ -1,0 +1,36 @@
+import express, { Application, Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import applicationRoutes from './routes/applicationRoutes';
+
+const app: Application = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Basic Route for health check
+app.get('/api/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', message: 'Backend is healthy and running' });
+});
+
+// A placeholder api route for future jobs features
+app.get('/api/jobs', (req: Request, res: Response) => {
+  res.status(200).json([
+    { id: '1', company: 'Example Corp', title: 'Software Engineer', status: 'Applied', date: '2026-07-14' }
+  ]);
+});
+
+// Register Application Routes
+app.use('/api/applications', applicationRoutes);
+
+// Global Error Handling Middleware
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('[Error Middleware]:', err.stack || err);
+  const status = err.status || 500;
+  res.status(status).json({
+    status: 'error',
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+export default app;
