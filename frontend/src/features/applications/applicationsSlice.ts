@@ -1,18 +1,33 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { JobApplication } from '../../types/application';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import type { JobApplication, ApplicationStatus } from '../../types/application';
+import type { RootState } from '../../app/store';
 
 // State interface
 interface ApplicationsState {
   applications: JobApplication[];
   loading: boolean;
   error: string | null;
+  searchKeyword: string;
+  statusFilter: 'all' | ApplicationStatus;
 }
 
 const initialState: ApplicationsState = {
   applications: [],
   loading: false,
   error: null,
+  searchKeyword: '',
+  statusFilter: 'all',
 };
+
+// Statistics Interface
+export interface ApplicationStats {
+  total: number;
+  applied: number;
+  interview: number;
+  offer: number;
+  rejected: number;
+}
 
 // Async Thunks
 export const fetchApplications = createAsyncThunk<JobApplication[], void, { rejectValue: string }>(
@@ -100,7 +115,14 @@ export const deleteApplication = createAsyncThunk<string, string, { rejectValue:
 const applicationsSlice = createSlice({
   name: 'applications',
   initialState,
-  reducers: {},
+  reducers: {
+    setSearchKeyword(state, action: PayloadAction<string>) {
+      state.searchKeyword = action.payload;
+    },
+    setStatusFilter(state, action: PayloadAction<'all' | ApplicationStatus>) {
+      state.statusFilter = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch Applications
@@ -133,5 +155,58 @@ const applicationsSlice = createSlice({
       });
   },
 });
+
+export const { setSearchKeyword, setStatusFilter } = applicationsSlice.actions;
+
+// Selectors
+export const selectApplications = (state: RootState) => state.applications.applications;
+export const selectSearchKeyword = (state: RootState) => state.applications.searchKeyword;
+export const selectStatusFilter = (state: RootState) => state.applications.statusFilter;
+export const selectLoading = (state: RootState) => state.applications.loading;
+export const selectError = (state: RootState) => state.applications.error;
+
+// Memoized derived selector using createSelector for filtered applications
+export const selectFilteredApplications = createSelector(
+  [selectApplications, selectSearchKeyword, selectStatusFilter],
+  (applications, searchKeyword, statusFilter) => {
+    const trimmedKeyword = searchKeyword.trim().toLowerCase();
+
+    return applications.filter((app) => {
+      // 1. Keyword search (companyName OR position)
+      const matchesKeyword =
+        !trimmedKeyword ||
+        app.companyName.toLowerCase().includes(trimmedKeyword) ||
+        app.position.toLowerCase().includes(trimmedKeyword);
+
+      // 2. Status filter
+      const matchesStatus =
+        statusFilter === 'all' || app.status === statusFilter;
+
+      return matchesKeyword && matchesStatus;
+    });
+  }
+);
+
+// Memoized derived selector using createSelector for dashboard statistics (calculated from total applications)
+export const selectApplicationStats = createSelector(
+  [selectApplications],
+  (applications): ApplicationStats => {
+    const stats: ApplicationStats = {
+      total: applications.length,
+      applied: 0,
+      interview: 0,
+      offer: 0,
+      rejected: 0,
+    };
+
+    applications.forEach((app) => {
+      if (app.status in stats) {
+        stats[app.status as keyof Omit<ApplicationStats, 'total'>]++;
+      }
+    });
+
+    return stats;
+  }
+);
 
 export default applicationsSlice.reducer;

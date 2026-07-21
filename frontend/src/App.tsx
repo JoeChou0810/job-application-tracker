@@ -5,20 +5,35 @@ import {
   addApplication,
   updateApplication,
   deleteApplication,
+  setSearchKeyword,
+  setStatusFilter,
+  selectApplications,
+  selectSearchKeyword,
+  selectStatusFilter,
+  selectLoading,
+  selectError,
+  selectFilteredApplications,
+  selectApplicationStats,
 } from './features/applications/applicationsSlice';
-import type { JobApplication } from './types/application';
+import type { JobApplication, ApplicationStatus } from './types/application';
 import './App.css';
 
 function App() {
   const dispatch = useAppDispatch();
-  const { applications, loading, error } = useAppSelector((state) => state.applications);
+  const applications = useAppSelector(selectApplications);
+  const filteredApplications = useAppSelector(selectFilteredApplications);
+  const stats = useAppSelector(selectApplicationStats);
+  const searchKeyword = useAppSelector(selectSearchKeyword);
+  const statusFilter = useAppSelector(selectStatusFilter);
+  const loading = useAppSelector(selectLoading);
+  const error = useAppSelector(selectError);
 
   // Form toggling state
   const [showForm, setShowForm] = useState<boolean>(false);
   // Mode state: null represents "Create Mode", string represents "Edit Mode" with target ID
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form input states
+  // Form input states (temporary component local states)
   const [companyName, setCompanyName] = useState<string>('');
   const [position, setPosition] = useState<string>('');
   const [status, setStatus] = useState<JobApplication['status']>('applied');
@@ -132,11 +147,13 @@ function App() {
     switch (status) {
       case 'applied': return '已投遞';
       case 'interview': return '面試中';
-      case 'offer': return '已錄取';
+      case 'offer': return 'Offer';
       case 'rejected': return '未錄取';
       default: return status;
     }
   };
+
+  const hasActiveFilter = searchKeyword.trim() !== '' || statusFilter !== 'all';
 
   return (
     <div className="tracker-container">
@@ -152,6 +169,47 @@ function App() {
       </header>
 
       <main className="tracker-main">
+        {/* Dashboard Statistics Overview Cards */}
+        <section className="stats-section">
+          <div className="stats-grid">
+            <div className="stat-card card-total">
+              <span className="stat-icon">📊</span>
+              <div className="stat-info">
+                <span className="stat-label">全部應徵數</span>
+                <span className="stat-value">{stats.total}</span>
+              </div>
+            </div>
+            <div className="stat-card card-applied">
+              <span className="stat-icon">📩</span>
+              <div className="stat-info">
+                <span className="stat-label">已投遞</span>
+                <span className="stat-value">{stats.applied}</span>
+              </div>
+            </div>
+            <div className="stat-card card-interview">
+              <span className="stat-icon">💬</span>
+              <div className="stat-info">
+                <span className="stat-label">面試中</span>
+                <span className="stat-value">{stats.interview}</span>
+              </div>
+            </div>
+            <div className="stat-card card-offer">
+              <span className="stat-icon">🎉</span>
+              <div className="stat-info">
+                <span className="stat-label">Offer</span>
+                <span className="stat-value">{stats.offer}</span>
+              </div>
+            </div>
+            <div className="stat-card card-rejected">
+              <span className="stat-icon">📁</span>
+              <div className="stat-info">
+                <span className="stat-label">未錄取</span>
+                <span className="stat-value">{stats.rejected}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Shared Form Card (Create or Edit Mode) */}
         {showForm && (
           <section className="form-card">
@@ -201,7 +259,7 @@ function App() {
                   >
                     <option value="applied">已投遞</option>
                     <option value="interview">面試中</option>
-                    <option value="offer">已錄取</option>
+                    <option value="offer">Offer</option>
                     <option value="rejected">未錄取</option>
                   </select>
                 </div>
@@ -252,8 +310,42 @@ function App() {
                 {showForm && editingId === null ? '取消新增' : '➕ 新增求職紀錄'}
               </button>
               {!loading && !error && (
-                <span className="badge-count">共 {applications.length} 筆資料</span>
+                <span className="badge-count">
+                  {hasActiveFilter
+                    ? `顯示 ${filteredApplications.length} / 共 ${applications.length} 筆`
+                    : `共 ${applications.length} 筆資料`}
+                </span>
               )}
+            </div>
+          </div>
+
+          {/* Search and Filter Controls */}
+          <div className="filter-bar">
+            <div className="search-box">
+              <input
+                id="searchKeyword"
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => dispatch(setSearchKeyword(e.target.value))}
+                placeholder="🔍 搜尋公司名稱或職缺名稱..."
+                className="search-input"
+              />
+            </div>
+
+            <div className="filter-box">
+              <label htmlFor="statusFilter">狀態篩選：</label>
+              <select
+                id="statusFilter"
+                value={statusFilter}
+                onChange={(e) => dispatch(setStatusFilter(e.target.value as 'all' | ApplicationStatus))}
+                className="filter-select"
+              >
+                <option value="all">全部</option>
+                <option value="applied">已投遞</option>
+                <option value="interview">面試中</option>
+                <option value="offer">Offer</option>
+                <option value="rejected">未錄取</option>
+              </select>
             </div>
           </div>
 
@@ -283,6 +375,10 @@ function App() {
                 <div className="empty-state">
                   <p>目前沒有求職紀錄</p>
                 </div>
+              ) : filteredApplications.length === 0 ? (
+                <div className="empty-state">
+                  <p>找不到符合條件的求職紀錄</p>
+                </div>
               ) : (
                 <table className="applications-table">
                   <thead>
@@ -296,7 +392,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {applications.map((app) => (
+                    {filteredApplications.map((app) => (
                       <tr key={app.id} className={`status-row-${app.status}`}>
                         <td className="font-bold">{app.companyName}</td>
                         <td>{app.position}</td>
