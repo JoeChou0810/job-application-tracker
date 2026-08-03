@@ -1,14 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
-import { mockJobApplications } from '../models/mockData';
+import { query, get, run } from '../config/db';
 import { JobApplication, ApplicationStatus } from '../types/application';
+
+// Database row structure
+interface DBApplication {
+  id: string;
+  company_name: string;
+  position: string;
+  status: string;
+  applied_date: string;
+  note: string | null;
+}
+
+// Convert DB schema format (snake_case) to client/frontend API format (camelCase)
+const mapToClient = (dbApp: DBApplication): JobApplication => {
+  return {
+    id: dbApp.id,
+    companyName: dbApp.company_name,
+    position: dbApp.position,
+    status: dbApp.status as ApplicationStatus,
+    appliedDate: dbApp.applied_date,
+    note: dbApp.note === null ? undefined : dbApp.note,
+  };
+};
 
 /**
  * GET /api/applications
- * Returns all job applications with basic error handling
+ * Returns all job applications from SQLite
  */
 export const getApplications = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const applications = mockJobApplications;
+    const rows = await query<DBApplication>('SELECT * FROM applications');
+    const applications = rows.map(mapToClient);
     res.status(200).json(applications);
   } catch (error) {
     next(error);
@@ -17,7 +40,7 @@ export const getApplications = async (req: Request, res: Response, next: NextFun
 
 /**
  * POST /api/applications
- * Creates a new job application with input validation
+ * Creates a new job application in SQLite
  */
 export const createApplication = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -60,21 +83,32 @@ export const createApplication = async (req: Request, res: Response, next: NextF
       return;
     }
 
-    // 2. Generate Application ID and construct item
-    const newApplication: JobApplication = {
-      id: `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      companyName: companyName.trim(),
-      position: position.trim(),
-      status: status as ApplicationStatus,
-      appliedDate: appliedDate.trim(),
-      note: note && typeof note === 'string' ? note.trim() : undefined
+    // 2. Generate ID and parse inputs
+    const newId = `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const companyVal = companyName.trim();
+    const positionVal = position.trim();
+    const statusVal = status as ApplicationStatus;
+    const appliedDateVal = appliedDate.trim();
+    const noteVal = note && typeof note === 'string' ? note.trim() : null;
+
+    // 3. Save to SQLite
+    await run(
+      `INSERT INTO applications (id, company_name, position, status, applied_date, note)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [newId, companyVal, positionVal, statusVal, appliedDateVal, noteVal]
+    );
+
+    const newApp: JobApplication = {
+      id: newId,
+      companyName: companyVal,
+      position: positionVal,
+      status: statusVal,
+      appliedDate: appliedDateVal,
+      note: noteVal === null ? undefined : noteVal
     };
 
-    // 3. Save to memory array
-    mockJobApplications.push(newApplication);
-
-    // 4. Return 201 Created with JSON representation of the new item
-    res.status(201).json(newApplication);
+    // 4. Return 201 Created
+    res.status(201).json(newApp);
   } catch (error) {
     next(error);
   }
@@ -82,27 +116,33 @@ export const createApplication = async (req: Request, res: Response, next: NextF
 
 /**
  * PATCH /api/applications/:id
- * Updates an existing job application by ID
+ * Updates an existing job application in SQLite
  */
 export const updateApplication = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { companyName, position, status, appliedDate, note } = req.body;
 
-    // 1. Locate the application
-    const application = mockJobApplications.find((app) => app.id === id);
-    if (!application) {
+    // 1. Find original row
+    const row = await get<DBApplication>('SELECT * FROM applications WHERE id = ?', [id]);
+    if (!row) {
       res.status(404).json({ status: 'error', message: '找不到指定的求職紀錄。' });
       return;
     }
 
-    // 2. Validate and update input fields
+    let companyVal = row.company_name;
+    let positionVal = row.position;
+    let statusVal = row.status as ApplicationStatus;
+    let appliedDateVal = row.applied_date;
+    let noteVal = row.note;
+
+    // 2. Validate and update fields
     if (companyName !== undefined) {
       if (typeof companyName !== 'string' || !companyName.trim()) {
         res.status(400).json({ status: 'error', message: '公司名稱 (companyName) 必須是有效字串且不可為空。' });
         return;
       }
-      application.companyName = companyName.trim();
+      companyVal = companyName.trim();
     }
 
     if (position !== undefined) {
@@ -110,7 +150,7 @@ export const updateApplication = async (req: Request, res: Response, next: NextF
         res.status(400).json({ status: 'error', message: '職缺名稱 (position) 必須是有效字串且不可為空。' });
         return;
       }
-      application.position = position.trim();
+      positionVal = position.trim();
     }
 
     if (status !== undefined) {
@@ -126,7 +166,7 @@ export const updateApplication = async (req: Request, res: Response, next: NextF
         });
         return;
       }
-      application.status = status as ApplicationStatus;
+      statusVal = status as ApplicationStatus;
     }
 
     if (appliedDate !== undefined) {
@@ -139,15 +179,31 @@ export const updateApplication = async (req: Request, res: Response, next: NextF
         res.status(400).json({ status: 'error', message: '應徵日期格式必須為 YYYY-MM-DD。' });
         return;
       }
-      application.appliedDate = appliedDate.trim();
+      appliedDateVal = appliedDate.trim();
     }
 
     if (note !== undefined) {
-      application.note = note && typeof note === 'string' && note.trim() ? note.trim() : undefined;
+      noteVal = note && typeof note === 'string' && note.trim() ? note.trim() : null;
     }
 
-    // 3. Return 200 OK with the updated application
-    res.status(200).json(application);
+    // 3. Update database
+    await run(
+      `UPDATE applications 
+       SET company_name = ?, position = ?, status = ?, applied_date = ?, note = ?
+       WHERE id = ?`,
+      [companyVal, positionVal, statusVal, appliedDateVal, noteVal, id]
+    );
+
+    const updatedApp: JobApplication = {
+      id,
+      companyName: companyVal,
+      position: positionVal,
+      status: statusVal,
+      appliedDate: appliedDateVal,
+      note: noteVal === null ? undefined : noteVal
+    };
+
+    res.status(200).json(updatedApp);
   } catch (error) {
     next(error);
   }
@@ -155,24 +211,24 @@ export const updateApplication = async (req: Request, res: Response, next: NextF
 
 /**
  * DELETE /api/applications/:id
- * Deletes an existing job application by ID
+ * Deletes an existing job application by ID from SQLite
  */
 export const deleteApplication = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
-    // 1. Locate the application index
-    const index = mockJobApplications.findIndex((app) => app.id === id);
-    if (index === -1) {
+    // 1. Find original row
+    const row = await get<DBApplication>('SELECT * FROM applications WHERE id = ?', [id]);
+    if (!row) {
       res.status(404).json({ status: 'error', message: '找不到指定的求職紀錄。' });
       return;
     }
 
-    // 2. Remove application from memory array
-    const [deletedApplication] = mockJobApplications.splice(index, 1);
+    // 2. Delete from database
+    await run('DELETE FROM applications WHERE id = ?', [id]);
 
-    // 3. Return 200 OK with the deleted application
-    res.status(200).json(deletedApplication);
+    const deletedApp = mapToClient(row);
+    res.status(200).json(deletedApp);
   } catch (error) {
     next(error);
   }

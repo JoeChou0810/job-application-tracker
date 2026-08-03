@@ -40,6 +40,14 @@ function App() {
   const [appliedDate, setAppliedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState<string>('');
 
+  // Frontend field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState<{
+    companyName?: string;
+    position?: string;
+    appliedDate?: string;
+    status?: string;
+  }>({});
+
   // Submit status states
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -48,9 +56,19 @@ function App() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Success Notification state
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   useEffect(() => {
     dispatch(fetchApplications());
   }, [dispatch]);
+
+  const showSuccessToast = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+  };
 
   const handleCreateClick = () => {
     // Reset inputs and set to Create Mode
@@ -61,6 +79,7 @@ function App() {
     setNote('');
     setEditingId(null);
     setSubmitError(null);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -73,6 +92,7 @@ function App() {
     setNote(app.note || '');
     setEditingId(app.id);
     setSubmitError(null);
+    setFieldErrors({});
     setShowForm(true);
     
     // Smooth scroll to form card
@@ -83,12 +103,47 @@ function App() {
     setShowForm(false);
     setEditingId(null);
     setSubmitError(null);
+    setFieldErrors({});
+  };
+
+  // Shared validation logic for Add and Edit
+  const validateForm = (): boolean => {
+    const errors: typeof fieldErrors = {};
+    const trimmedCompany = companyName.trim();
+    const trimmedPosition = position.trim();
+    const trimmedDate = appliedDate.trim();
+
+    if (!trimmedCompany) {
+      errors.companyName = '公司名稱不可為空。';
+    }
+
+    if (!trimmedPosition) {
+      errors.position = '職缺名稱不可為空。';
+    }
+
+    if (!trimmedDate) {
+      errors.appliedDate = '應徵日期不可為空。';
+    } else {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(trimmedDate)) {
+        errors.appliedDate = '日期格式必須為 YYYY-MM-DD。';
+      }
+    }
+
+    const validStatuses: ApplicationStatus[] = ['applied', 'interview', 'offer', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      errors.status = '無效的進度狀態選項。';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || !position.trim() || !appliedDate.trim()) {
-      setSubmitError('請填寫所有必要欄位。');
+    
+    // 1. Perform Frontend Validation
+    if (!validateForm()) {
       return;
     }
 
@@ -100,17 +155,19 @@ function App() {
         companyName: companyName.trim(),
         position: position.trim(),
         status,
-        appliedDate,
+        appliedDate: appliedDate.trim(),
         note: note.trim() || undefined,
       };
 
       if (editingId !== null) {
         await dispatch(updateApplication({ id: editingId, updates: payload })).unwrap();
+        showSuccessToast('修改求職紀錄成功！');
       } else {
         await dispatch(addApplication(payload)).unwrap();
+        showSuccessToast('新增求職紀錄成功！');
       }
 
-      // Reset form fields and close
+      // Reset form fields and close on success
       setCompanyName('');
       setPosition('');
       setStatus('applied');
@@ -118,8 +175,10 @@ function App() {
       setNote('');
       setShowForm(false);
       setEditingId(null);
+      setFieldErrors({});
     } catch (err: any) {
       console.error('Submit application error:', err);
+      // Display backend-returned validation or system error messages
       setSubmitError(err || '儲存失敗，請檢查網路連線或稍後再試。');
     } finally {
       setSubmitting(false);
@@ -135,8 +194,10 @@ function App() {
       setDeleteError(null);
 
       await dispatch(deleteApplication(id)).unwrap();
+      showSuccessToast('刪除求職紀錄成功！');
     } catch (err: any) {
       console.error('Delete application error:', err);
+      // Display backend-returned validation or system error messages
       setDeleteError(err || '刪除失敗，請檢查網路連線。');
     } finally {
       setDeletingId(null);
@@ -157,6 +218,13 @@ function App() {
 
   return (
     <div className="tracker-container">
+      {/* Toast Success Notification */}
+      {successMessage && (
+        <div className="alert alert-success toast-notification">
+          ✨ {successMessage}
+        </div>
+      )}
+
       <header className="tracker-header">
         <div className="logo-section">
           <span className="logo-badge">🎯</span>
@@ -227,11 +295,19 @@ function App() {
                     id="companyName"
                     type="text"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => {
+                      setCompanyName(e.target.value);
+                      if (fieldErrors.companyName) {
+                        setFieldErrors(prev => ({ ...prev, companyName: undefined }));
+                      }
+                    }}
                     placeholder="例如: Google, TSMC..."
                     required
                     disabled={submitting}
                   />
+                  {fieldErrors.companyName && (
+                    <span className="field-error-text">{fieldErrors.companyName}</span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -240,11 +316,19 @@ function App() {
                     id="position"
                     type="text"
                     value={position}
-                    onChange={(e) => setPosition(e.target.value)}
+                    onChange={(e) => {
+                      setPosition(e.target.value);
+                      if (fieldErrors.position) {
+                        setFieldErrors(prev => ({ ...prev, position: undefined }));
+                      }
+                    }}
                     placeholder="例如: 前端工程師, 軟體實習生..."
                     required
                     disabled={submitting}
                   />
+                  {fieldErrors.position && (
+                    <span className="field-error-text">{fieldErrors.position}</span>
+                  )}
                 </div>
               </div>
 
@@ -254,7 +338,12 @@ function App() {
                   <select
                     id="status"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as JobApplication['status'])}
+                    onChange={(e) => {
+                      setStatus(e.target.value as JobApplication['status']);
+                      if (fieldErrors.status) {
+                        setFieldErrors(prev => ({ ...prev, status: undefined }));
+                      }
+                    }}
                     disabled={submitting}
                   >
                     <option value="applied">已投遞</option>
@@ -262,6 +351,9 @@ function App() {
                     <option value="offer">Offer</option>
                     <option value="rejected">未錄取</option>
                   </select>
+                  {fieldErrors.status && (
+                    <span className="field-error-text">{fieldErrors.status}</span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -270,10 +362,18 @@ function App() {
                     id="appliedDate"
                     type="date"
                     value={appliedDate}
-                    onChange={(e) => setAppliedDate(e.target.value)}
+                    onChange={(e) => {
+                      setAppliedDate(e.target.value);
+                      if (fieldErrors.appliedDate) {
+                        setFieldErrors(prev => ({ ...prev, appliedDate: undefined }));
+                      }
+                    }}
                     required
                     disabled={submitting}
                   />
+                  {fieldErrors.appliedDate && (
+                    <span className="field-error-text">{fieldErrors.appliedDate}</span>
+                  )}
                 </div>
               </div>
 
@@ -366,6 +466,11 @@ function App() {
             <div className="alert alert-error">
               <strong>連線錯誤：</strong> {error} <br />
               請確認後端伺服器已啟動於 `http://localhost:5000`。
+              <div style={{ marginTop: '12px' }}>
+                <button className="btn-retry" onClick={() => dispatch(fetchApplications())}>
+                  🔄 重新載入
+                </button>
+              </div>
             </div>
           )}
 

@@ -159,6 +159,57 @@
   color: #dc2626;
 }
 
+.alert-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+
+/* Toast Success Notification */
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  min-width: 240px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Retry Connection Button */
+.btn-retry {
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s ease, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-retry:hover {
+  background: #b91c1c;
+}
+
+.btn-retry:active {
+  transform: scale(0.97);
+}
+
 /* Form & List Cards */
 .form-card, .list-card {
   background: var(--bg);
@@ -244,6 +295,15 @@
   background-color: var(--code-bg);
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* Field level error text */
+.field-error-text {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 2px;
+  display: block;
 }
 
 .form-actions {
