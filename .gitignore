@@ -25,3 +25,8 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 .gemini/
+
+# Database files
+*.sqlite
+*.db
+

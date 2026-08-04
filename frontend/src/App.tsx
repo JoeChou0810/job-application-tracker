@@ -28,7 +28,7 @@ function App() {
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
 
-  // Form toggling state
+  // Form toggling state (will be displayed as Modal overlay)
   const [showForm, setShowForm] = useState<boolean>(false);
   // Mode state: null represents "Create Mode", string represents "Edit Mode" with target ID
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,7 +52,9 @@ function App() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Deletion status states
+  // Custom Deletion Confirmation Modal states
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -71,7 +73,6 @@ function App() {
   };
 
   const handleCreateClick = () => {
-    // Reset inputs and set to Create Mode
     setCompanyName('');
     setPosition('');
     setStatus('applied');
@@ -84,7 +85,6 @@ function App() {
   };
 
   const handleEditClick = (app: JobApplication) => {
-    // Prefill inputs and set to Edit Mode
     setCompanyName(app.companyName);
     setPosition(app.position);
     setStatus(app.status);
@@ -94,9 +94,6 @@ function App() {
     setSubmitError(null);
     setFieldErrors({});
     setShowForm(true);
-    
-    // Smooth scroll to form card
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelClick = () => {
@@ -106,7 +103,12 @@ function App() {
     setFieldErrors({});
   };
 
-  // Shared validation logic for Add and Edit
+  const handleStartDelete = (id: string, name: string) => {
+    setDeleteConfirmId(id);
+    setDeleteConfirmName(name);
+    setDeleteError(null);
+  };
+
   const validateForm = (): boolean => {
     const errors: typeof fieldErrors = {};
     const trimmedCompany = companyName.trim();
@@ -141,8 +143,6 @@ function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 1. Perform Frontend Validation
     if (!validateForm()) {
       return;
     }
@@ -167,7 +167,6 @@ function App() {
         showSuccessToast('新增求職紀錄成功！');
       }
 
-      // Reset form fields and close on success
       setCompanyName('');
       setPosition('');
       setStatus('applied');
@@ -178,26 +177,22 @@ function App() {
       setFieldErrors({});
     } catch (err: any) {
       console.error('Submit application error:', err);
-      // Display backend-returned validation or system error messages
       setSubmitError(err || '儲存失敗，請檢查網路連線或稍後再試。');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteClick = async (id: string, companyName: string) => {
-    const confirmed = window.confirm(`確定要刪除「${companyName}」的求職紀錄嗎？`);
-    if (!confirmed) return;
-
+  const handleDeleteClick = async (id: string) => {
     try {
       setDeletingId(id);
       setDeleteError(null);
 
       await dispatch(deleteApplication(id)).unwrap();
       showSuccessToast('刪除求職紀錄成功！');
+      setDeleteConfirmId(null); // Close confirm modal
     } catch (err: any) {
       console.error('Delete application error:', err);
-      // Display backend-returned validation or system error messages
       setDeleteError(err || '刪除失敗，請檢查網路連線。');
     } finally {
       setDeletingId(null);
@@ -278,127 +273,168 @@ function App() {
           </div>
         </section>
 
-        {/* Shared Form Card (Create or Edit Mode) */}
+        {/* Create/Edit Form Modal */}
         {showForm && (
-          <section className="form-card">
-            <h2>{editingId ? '編輯求職紀錄' : '新增求職紀錄'}</h2>
-            {submitError && (
-              <div className="alert alert-error">
-                <strong>儲存失敗：</strong> {submitError}
+          <div className="modal-overlay" onClick={handleCancelClick}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{editingId ? '編輯求職紀錄' : '新增求職紀錄'}</h2>
+                <button className="btn-close-modal" onClick={handleCancelClick} disabled={submitting}>&times;</button>
               </div>
-            )}
-            <form onSubmit={handleSubmit} className="job-form">
-              <div className="form-row">
+              {submitError && (
+                <div className="alert alert-error">
+                  <strong>儲存失敗：</strong> {submitError}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} className="job-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="companyName">公司名稱 *</label>
+                    <input
+                      id="companyName"
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => {
+                        setCompanyName(e.target.value);
+                        if (fieldErrors.companyName) {
+                          setFieldErrors(prev => ({ ...prev, companyName: undefined }));
+                        }
+                      }}
+                      placeholder="例如: Google, TSMC..."
+                      required
+                      disabled={submitting}
+                    />
+                    {fieldErrors.companyName && (
+                      <span className="field-error-text">{fieldErrors.companyName}</span>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="position">職缺名稱 *</label>
+                    <input
+                      id="position"
+                      type="text"
+                      value={position}
+                      onChange={(e) => {
+                        setPosition(e.target.value);
+                        if (fieldErrors.position) {
+                          setFieldErrors(prev => ({ ...prev, position: undefined }));
+                        }
+                      }}
+                      placeholder="例如: 前端工程師, 軟體實習生..."
+                      required
+                      disabled={submitting}
+                    />
+                    {fieldErrors.position && (
+                      <span className="field-error-text">{fieldErrors.position}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="status">進度狀態 *</label>
+                    <select
+                      id="status"
+                      value={status}
+                      onChange={(e) => {
+                        setStatus(e.target.value as JobApplication['status']);
+                        if (fieldErrors.status) {
+                          setFieldErrors(prev => ({ ...prev, status: undefined }));
+                        }
+                      }}
+                      disabled={submitting}
+                    >
+                      <option value="applied">已投遞</option>
+                      <option value="interview">面試中</option>
+                      <option value="offer">Offer</option>
+                      <option value="rejected">未錄取</option>
+                    </select>
+                    {fieldErrors.status && (
+                      <span className="field-error-text">{fieldErrors.status}</span>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="appliedDate">應徵日期 *</label>
+                    <input
+                      id="appliedDate"
+                      type="date"
+                      value={appliedDate}
+                      onChange={(e) => {
+                        setAppliedDate(e.target.value);
+                        if (fieldErrors.appliedDate) {
+                          setFieldErrors(prev => ({ ...prev, appliedDate: undefined }));
+                        }
+                      }}
+                      required
+                      disabled={submitting}
+                    />
+                    {fieldErrors.appliedDate && (
+                      <span className="field-error-text">{fieldErrors.appliedDate}</span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label htmlFor="companyName">公司名稱 *</label>
-                  <input
-                    id="companyName"
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => {
-                      setCompanyName(e.target.value);
-                      if (fieldErrors.companyName) {
-                        setFieldErrors(prev => ({ ...prev, companyName: undefined }));
-                      }
-                    }}
-                    placeholder="例如: Google, TSMC..."
-                    required
+                  <label htmlFor="note">備註說明</label>
+                  <textarea
+                    id="note"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="面試細節、聯絡窗口等備註..."
+                    rows={2}
                     disabled={submitting}
                   />
-                  {fieldErrors.companyName && (
-                    <span className="field-error-text">{fieldErrors.companyName}</span>
-                  )}
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="position">職缺名稱 *</label>
-                  <input
-                    id="position"
-                    type="text"
-                    value={position}
-                    onChange={(e) => {
-                      setPosition(e.target.value);
-                      if (fieldErrors.position) {
-                        setFieldErrors(prev => ({ ...prev, position: undefined }));
-                      }
-                    }}
-                    placeholder="例如: 前端工程師, 軟體實習生..."
-                    required
-                    disabled={submitting}
-                  />
-                  {fieldErrors.position && (
-                    <span className="field-error-text">{fieldErrors.position}</span>
-                  )}
+                <div className="form-actions">
+                  <button type="button" className="btn-cancel" onClick={handleCancelClick} disabled={submitting}>
+                    取消
+                  </button>
+                  <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? '儲存中...' : (editingId ? '儲存修改' : '確認新增')}
+                  </button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div className="modal-overlay" onClick={() => setDeleteConfirmId(null)}>
+            <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>⚠️ 確定刪除紀錄？</h2>
+                <button className="btn-close-modal" onClick={() => setDeleteConfirmId(null)} disabled={deletingId !== null}>&times;</button>
               </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="status">進度狀態 *</label>
-                  <select
-                    id="status"
-                    value={status}
-                    onChange={(e) => {
-                      setStatus(e.target.value as JobApplication['status']);
-                      if (fieldErrors.status) {
-                        setFieldErrors(prev => ({ ...prev, status: undefined }));
-                      }
-                    }}
-                    disabled={submitting}
-                  >
-                    <option value="applied">已投遞</option>
-                    <option value="interview">面試中</option>
-                    <option value="offer">Offer</option>
-                    <option value="rejected">未錄取</option>
-                  </select>
-                  {fieldErrors.status && (
-                    <span className="field-error-text">{fieldErrors.status}</span>
-                  )}
+              {deleteError && (
+                <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+                  <strong>刪除失敗：</strong> {deleteError}
                 </div>
-
-                <div className="form-group">
-                  <label htmlFor="appliedDate">應徵日期 *</label>
-                  <input
-                    id="appliedDate"
-                    type="date"
-                    value={appliedDate}
-                    onChange={(e) => {
-                      setAppliedDate(e.target.value);
-                      if (fieldErrors.appliedDate) {
-                        setFieldErrors(prev => ({ ...prev, appliedDate: undefined }));
-                      }
-                    }}
-                    required
-                    disabled={submitting}
-                  />
-                  {fieldErrors.appliedDate && (
-                    <span className="field-error-text">{fieldErrors.appliedDate}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="note">備註說明</label>
-                <textarea
-                  id="note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="面試細節、聯絡窗口等備註..."
-                  rows={2}
-                  disabled={submitting}
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="button" className="btn-cancel" onClick={handleCancelClick} disabled={submitting}>
+              )}
+              <p>
+                您即將刪除「<strong>{deleteConfirmName}</strong>」的求職紀錄。此操作無法復原，是否確定？
+              </p>
+              <div className="modal-actions" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn-cancel" 
+                  onClick={() => setDeleteConfirmId(null)}
+                  disabled={deletingId !== null}
+                >
                   取消
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? '儲存中...' : (editingId ? '儲存修改' : '確認新增')}
+                <button 
+                  className="btn-delete" 
+                  onClick={() => handleDeleteClick(deleteConfirmId)}
+                  disabled={deletingId !== null}
+                >
+                  {deletingId ? '刪除中...' : '確定刪除'}
                 </button>
               </div>
-            </form>
-          </section>
+            </div>
+          </div>
         )}
 
         {/* Applications List */}
@@ -406,8 +442,8 @@ function App() {
           <div className="list-header">
             <h2>求職進度清單</h2>
             <div className="list-actions">
-              <button className="btn-add" onClick={showForm && editingId === null ? handleCancelClick : handleCreateClick}>
-                {showForm && editingId === null ? '取消新增' : '➕ 新增求職紀錄'}
+              <button className="btn-add" onClick={handleCreateClick}>
+                ➕ 新增求職紀錄
               </button>
               {!loading && !error && (
                 <span className="badge-count">
@@ -448,12 +484,6 @@ function App() {
               </select>
             </div>
           </div>
-
-          {deleteError && (
-            <div className="alert alert-error">
-              <strong>刪除失敗：</strong> {deleteError}
-            </div>
-          )}
 
           {loading && (
             <div className="loading-state">
@@ -499,16 +529,16 @@ function App() {
                   <tbody>
                     {filteredApplications.map((app) => (
                       <tr key={app.id} className={`status-row-${app.status}`}>
-                        <td className="font-bold">{app.companyName}</td>
-                        <td>{app.position}</td>
-                        <td>
+                        <td data-label="公司名稱" className="font-bold">{app.companyName}</td>
+                        <td data-label="職缺名稱">{app.position}</td>
+                        <td data-label="狀態">
                           <span className={`status-badge badge-${app.status}`}>
                             {getStatusLabel(app.status)}
                           </span>
                         </td>
-                        <td>{app.appliedDate}</td>
-                        <td className="text-muted">{app.note || '-'}</td>
-                        <td>
+                        <td data-label="應徵日期">{app.appliedDate}</td>
+                        <td data-label="備註" className="text-muted">{app.note || '-'}</td>
+                        <td data-label="操作">
                           <div className="table-actions">
                             <button 
                               className="btn-edit-row" 
@@ -519,10 +549,10 @@ function App() {
                             </button>
                             <button 
                               className="btn-delete-row" 
-                              onClick={() => handleDeleteClick(app.id, app.companyName)}
-                              disabled={deletingId === app.id}
+                              onClick={() => handleStartDelete(app.id, app.companyName)}
+                              disabled={deletingId !== null}
                             >
-                              {deletingId === app.id ? '刪除中...' : '🗑️ 刪除'}
+                              🗑️ 刪除
                             </button>
                           </div>
                         </td>
