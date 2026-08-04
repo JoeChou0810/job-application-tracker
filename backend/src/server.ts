@@ -11,8 +11,9 @@ const startServer = async () => {
     // Initialize Database
     await initDatabase();
 
-    app.listen(PORT, () => {
-      console.log(`[server]: Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    const portNumber = Number(PORT);
+    app.listen(portNumber, '0.0.0.0', () => {
+      console.log(`[server]: Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${portNumber}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

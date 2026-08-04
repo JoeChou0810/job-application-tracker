@@ -495,7 +495,7 @@ function App() {
           {error && (
             <div className="alert alert-error">
               <strong>連線錯誤：</strong> {error} <br />
-              請確認後端伺服器已啟動於 `http://localhost:5000`。
+              請確認後端伺服器已啟動且網路連線正常。
               <div style={{ marginTop: '12px' }}>
                 <button className="btn-retry" onClick={() => dispatch(fetchApplications())}>
                   🔄 重新載入
