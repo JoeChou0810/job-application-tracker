@@ -7,9 +7,9 @@
 ## 🎨 專案畫面截圖 (Screenshots)
 
 *以下預留專案畫面截圖路徑以供作品集展示使用：*
-* **桌機版主要介面與 Dashboard 統計**：`![Desktop Dashboard](./screenshots/desktop_dashboard.png)`
-* **新增／編輯客製化對話框 (Modal)**：`![Form Modal](./screenshots/form_modal.png)`
-* **行動版卡片佈局與適應性排版**：`![Mobile View](./screenshots/mobile_view.png)`
+* **桌機版主要介面與 Dashboard 統計**：![Desktop Dashboard](./screenshots/desktop_dashboard.png)
+* **新增／編輯客製化對話框 (Modal)**：![Form Modal](./screenshots/form_modal.png)
+* **行動版卡片佈局與適應性排版**：![Mobile View](./screenshots/mobile_view.png)
 
 ---
 
