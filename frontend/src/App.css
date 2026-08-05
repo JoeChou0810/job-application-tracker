@@ -76,9 +76,20 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.95); opacity: 0.5; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.5; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
 }
 
 /* Stats Dashboard Grid */
@@ -140,11 +151,25 @@
 }
 
 /* Card Accent Colors */
-.card-total { border-left: 4px solid var(--accent); }
-.card-applied { border-left: 4px solid #3b82f6; }
-.card-interview { border-left: 4px solid #f59e0b; }
-.card-offer { border-left: 4px solid #10b981; }
-.card-rejected { border-left: 4px solid #ef4444; }
+.card-total {
+  border-left: 4px solid var(--accent);
+}
+
+.card-applied {
+  border-left: 4px solid #3b82f6;
+}
+
+.card-interview {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-offer {
+  border-left: 4px solid #10b981;
+}
+
+.card-rejected {
+  border-left: 4px solid #ef4444;
+}
 
 /* Alert box */
 .alert {
@@ -183,8 +208,15 @@
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Retry Connection Button */
@@ -244,8 +276,15 @@
 }
 
 @keyframes modalScaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal-header {
@@ -358,10 +397,17 @@
   color: var(--text);
 }
 
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+  font-weight: bold;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 12px 14px; /* Increased tap target sizes */
+  padding: 12px 14px;
+  /* Increased tap target sizes */
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -409,7 +455,8 @@
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 12px 24px; /* Comfortable tap size */
+  padding: 12px 24px;
+  /* Comfortable tap size */
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -434,7 +481,8 @@
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 12px 24px; /* Comfortable tap size */
+  padding: 12px 24px;
+  /* Comfortable tap size */
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -479,7 +527,8 @@
   color: var(--accent);
   border: 1px solid var(--accent-border);
   border-radius: 6px;
-  padding: 10px 18px; /* Comfortable tap size */
+  padding: 10px 18px;
+  /* Comfortable tap size */
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -518,7 +567,8 @@
 
 .search-input {
   width: 100%;
-  padding: 12px 14px; /* Increased tap target sizes */
+  padding: 12px 14px;
+  /* Increased tap target sizes */
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -544,7 +594,8 @@
 }
 
 .filter-select {
-  padding: 12px 14px; /* Comfortable tap size */
+  padding: 12px 14px;
+  /* Comfortable tap size */
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -600,10 +651,21 @@
 }
 
 /* Status row left indicator colors */
-.status-row-applied { border-left: 4px solid #3b82f6; }
-.status-row-interview { border-left: 4px solid #f59e0b; }
-.status-row-offer { border-left: 4px solid #10b981; }
-.status-row-rejected { border-left: 4px solid #ef4444; }
+.status-row-applied {
+  border-left: 4px solid #3b82f6;
+}
+
+.status-row-interview {
+  border-left: 4px solid #f59e0b;
+}
+
+.status-row-offer {
+  border-left: 4px solid #10b981;
+}
+
+.status-row-rejected {
+  border-left: 4px solid #ef4444;
+}
 
 /* Status Badges */
 .status-badge {
@@ -612,12 +674,31 @@
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
+  white-space: nowrap;
+  width: 76px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
-.badge-applied { background-color: rgba(59, 130, 246, 0.1); color: #2563eb; }
-.badge-interview { background-color: rgba(245, 158, 11, 0.1); color: #d97706; }
-.badge-offer { background-color: rgba(16, 185, 129, 0.1); color: #059669; }
-.badge-rejected { background-color: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.badge-applied {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.badge-interview {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.badge-offer {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.badge-rejected {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
 
 /* Row Action Buttons */
 .table-actions {
@@ -631,7 +712,8 @@
   color: var(--accent);
   border: 1px solid var(--accent-border);
   border-radius: 4px;
-  padding: 8px 14px; /* Increased tap target sizes */
+  padding: 8px 14px;
+  /* Increased tap target sizes */
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -655,7 +737,8 @@
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 4px;
-  padding: 8px 14px; /* Increased tap target sizes */
+  padding: 8px 14px;
+  /* Increased tap target sizes */
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -695,7 +778,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Empty State */
@@ -726,16 +811,17 @@
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .card-total {
     grid-column: span 2;
   }
-  
+
   /* Table morphing into cards */
   .applications-table thead {
-    display: none; /* Hide header row */
+    display: none;
+    /* Hide header row */
   }
-  
+
   .applications-table,
   .applications-table tbody,
   .applications-table tr,
@@ -743,7 +829,7 @@
     display: block;
     width: 100%;
   }
-  
+
   .applications-table tr {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -758,7 +844,7 @@
   .applications-table tr:hover {
     transform: translateY(-2px);
   }
-  
+
   .applications-table td {
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
@@ -768,7 +854,7 @@
     font-size: 14px;
     text-align: right;
   }
-  
+
   /* Use data-label attribute to render headers inline */
   .applications-table td::before {
     content: attr(data-label);
@@ -780,7 +866,7 @@
     text-align: left;
     margin-right: 12px;
   }
-  
+
   /* Special formatting for actions column */
   .applications-table td[data-label="操作"] {
     border-bottom: none;
@@ -788,9 +874,10 @@
     padding-top: 14px;
     justify-content: flex-end;
   }
-  
+
   .applications-table td[data-label="操作"]::before {
-    display: none; /* Remove "操作" label for buttons */
+    display: none;
+    /* Remove "操作" label for buttons */
   }
 
   .table-actions {
@@ -799,7 +886,8 @@
     justify-content: flex-end;
   }
 
-  .btn-edit-row, .btn-delete-row {
+  .btn-edit-row,
+  .btn-delete-row {
     flex: 1;
     max-width: 120px;
     text-align: center;
@@ -858,7 +946,8 @@
     gap: 10px;
   }
 
-  .btn-primary, .btn-cancel {
+  .btn-primary,
+  .btn-cancel {
     width: 100%;
     text-align: center;
   }
@@ -872,11 +961,11 @@
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-total {
     grid-column: span 1;
   }
-  
+
   .tracker-header {
     flex-direction: column;
     gap: 12px;

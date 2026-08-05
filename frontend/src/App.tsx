@@ -290,7 +290,7 @@ function App() {
               <form onSubmit={handleSubmit} className="job-form">
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="companyName">公司名稱 *</label>
+                    <label htmlFor="companyName">公司名稱 <span className="required-star">*</span></label>
                     <input
                       id="companyName"
                       type="text"
@@ -311,7 +311,7 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="position">職缺名稱 *</label>
+                    <label htmlFor="position">職缺名稱 <span className="required-star">*</span></label>
                     <input
                       id="position"
                       type="text"
@@ -334,7 +334,7 @@ function App() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="status">進度狀態 *</label>
+                    <label htmlFor="status">進度狀態 <span className="required-star">*</span></label>
                     <select
                       id="status"
                       value={status}
@@ -357,7 +357,7 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="appliedDate">應徵日期 *</label>
+                    <label htmlFor="appliedDate">應徵日期 <span className="required-star">*</span></label>
                     <input
                       id="appliedDate"
                       type="date"
