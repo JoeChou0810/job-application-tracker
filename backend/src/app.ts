@@ -5,7 +5,28 @@ import applicationRoutes from './routes/applicationRoutes';
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173'];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const isAllowed = allowedOrigins.indexOf(origin) !== -1;
+    // Automatically match any Vercel preview subdomains for this project
+    const isVercelPreview = origin.startsWith('https://job-application-tracker') && origin.endsWith('.vercel.app');
+    
+    if (isAllowed || isVercelPreview) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  }
+}));
 app.use(express.json());
 
 // Basic Route for health check

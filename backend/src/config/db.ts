@@ -1,7 +1,10 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import dotenv from 'dotenv';
 
-const dbPath = path.resolve(__dirname, '../../database.sqlite');
+dotenv.config();
+
+const dbPath = process.env.DATABASE_PATH || path.resolve(__dirname, '../../database.sqlite');
 
 // Verbose mode for better debugging
 const sqlite = sqlite3.verbose();

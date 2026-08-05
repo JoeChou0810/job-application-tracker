@@ -1,3 +1,4 @@
+// Vercel deployment trigger comment
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './app/hooks';
 import {
@@ -289,7 +290,7 @@ function App() {
               <form onSubmit={handleSubmit} className="job-form">
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="companyName">公司名稱 *</label>
+                    <label htmlFor="companyName">公司名稱 <span className="required-star">*</span></label>
                     <input
                       id="companyName"
                       type="text"
@@ -310,7 +311,7 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="position">職缺名稱 *</label>
+                    <label htmlFor="position">職缺名稱 <span className="required-star">*</span></label>
                     <input
                       id="position"
                       type="text"
@@ -333,7 +334,7 @@ function App() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="status">進度狀態 *</label>
+                    <label htmlFor="status">進度狀態 <span className="required-star">*</span></label>
                     <select
                       id="status"
                       value={status}
@@ -356,7 +357,7 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="appliedDate">應徵日期 *</label>
+                    <label htmlFor="appliedDate">應徵日期 <span className="required-star">*</span></label>
                     <input
                       id="appliedDate"
                       type="date"
@@ -495,7 +496,7 @@ function App() {
           {error && (
             <div className="alert alert-error">
               <strong>連線錯誤：</strong> {error} <br />
-              請確認後端伺服器已啟動於 `http://localhost:5000`。
+              請確認後端伺服器已啟動且網路連線正常。
               <div style={{ marginTop: '12px' }}>
                 <button className="btn-retry" onClick={() => dispatch(fetchApplications())}>
                   🔄 重新載入

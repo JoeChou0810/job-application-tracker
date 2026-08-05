@@ -29,12 +29,15 @@ export interface ApplicationStats {
   rejected: number;
 }
 
+// API Base URL (Read from environment variables, defaulting to localhost for development)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 // Async Thunks
 export const fetchApplications = createAsyncThunk<JobApplication[], void, { rejectValue: string }>(
   'applications/fetchApplications',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/applications');
+      const response = await fetch(`${API_BASE_URL}/api/applications`);
       const data = await response.json();
       if (!response.ok) {
         return rejectWithValue(data.message || `HTTP 錯誤！狀態碼: ${response.status}`);
@@ -50,7 +53,7 @@ export const addApplication = createAsyncThunk<JobApplication, Omit<JobApplicati
   'applications/addApplication',
   async (newApp, { rejectWithValue }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/applications', {
+      const response = await fetch(`${API_BASE_URL}/api/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +79,7 @@ export const updateApplication = createAsyncThunk<
   'applications/updateApplication',
   async ({ id, updates }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +101,7 @@ export const deleteApplication = createAsyncThunk<string, string, { rejectValue:
   'applications/deleteApplication',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
         method: 'DELETE',
       });
       const data = await response.json();
